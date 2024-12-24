@@ -152,6 +152,19 @@ function checkPullRequestDescription($metadata, $pullRequestUpdated)
     $type = "pull request description";
     $checkRunId = setCheckRunInProgress($metadata, $pullRequestUpdated->head->sha, $type);
     $bodyLength = isset($pullRequestUpdated->body) ? strlen($pullRequestUpdated->body) : 0;
+    if ($bodyLength === 0) {
+        $templateContent = getPullRequestTemplate($metadata);
+        if ($templateContent) {
+            updatePullRequestDescription($metadata, $templateContent);
+            // The check should ask to review the PR description (if there are checkbox on it, set is as failed, otherwise, set it as succeeded).
+            return;
+        }
+
+        $defaultMessage = "Please provide a description for this pull request.";
+        updatePullRequestDescription($metadata, $defaultMessage);
+        // add a comment with the same content.
+    }
+
     if ($bodyLength <= 250) {
         setCheckRunFailed($metadata, $checkRunId, $type, "Pull request description too short (at least 250 characters long).");
         return;

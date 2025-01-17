@@ -1,0 +1,16 @@
+<phpunit>
+    <php>
+        <ini name="error_reporting" value="-1"/>
+    </php>
+    <bootstrap>vendor/autoload.php</bootstrap>
+    <testsuites>
+        <testsuite name="Application Test Suite">
+            <directory>./</directory>
+        </testsuite>
+    </testsuites>
+    <filter>
+        <whitelist>
+            <directory suffix=".php">../src</directory>
+        </whitelist>
+    </filter>
+</phpunit>

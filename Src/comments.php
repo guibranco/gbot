@@ -750,6 +750,52 @@ function updateNextBuildNumber($metadata, $project, $nextBuildNumber): void
     doRequestGitHub($metadata["token"], $metadata["commentUrl"], array("body" => $commentBody), "POST");
 }
 
+function handleUpdateRepoVariableCommand($comment, $config)
+{
+    $commandExpression = "@" . $config->botName . " update repo variable ";
+    if (stripos($comment->CommentBody, $commandExpression) === false) {
+        return null;
+    }
+
+    $parts = explode(" ", str_ireplace($commandExpression, "", $comment->CommentBody));
+    if (count($parts) < 2) {
+        return "Error: Please provide both variable name and value.";
+    }
+
+    $name = $parts[0];
+    $value = $parts[1];
+    $owner = $comment->RepositoryOwner;
+    $repo = $comment->RepositoryName;
+    updateOrCreateRepoVariable($owner, $repo, $name, $value);
+    return "Variable '{$name}' has been updated/created successfully.";
+}
+
+function updateOrCreateRepoVariable($owner, $repo, $name, $value)
+{
+    $request = new Request();
+    $url = "https://api.github.com/repos/{$owner}/{$repo}/actions/variables";
+
+    // Get existing variables
+    $response = $request->get($url);
+    $variables = json_decode($response->getBody(), true);
+
+    $variableExists = false;
+    foreach ($variables as $variable) {
+        if ($variable['name'] === $name) {
+            $variableExists = true;
+            break;
+        }
+    }
+
+    if ($variableExists) {
+        $url .= "/{$name}";
+        $request->patch($url, ['value' => $value]);
+
+    } else {
+
+        // TODO add code to create variable
+    }
+}
 function main(): void
 {
     $config = loadConfig();

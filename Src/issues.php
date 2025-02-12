@@ -33,6 +33,16 @@ function handleItem($issue)
         return;
     }
 
+    // Check for Acceptance Criteria
+    if (!containsAcceptanceCriteria($issueUpdated->body)) {
+        commentOnIssue($metadata, "Please add an **Acceptance Criteria** section with a checklist of tasks.");
+    }
+}
+
+function containsAcceptanceCriteria($body)
+{
+    return preg_match('/##\s*Acceptance Criteria\s*\n(\s*- \[ \].+\n?)+/i', $body);
+
     if ($issueUpdated->assignee != null) {
         removeLabels($issueUpdated, $metadata);
         return;

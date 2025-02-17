@@ -51,6 +51,26 @@ function handleItem($pullRequest, $isRetry = false)
     addLabelsFromIssue($metadata, $pullRequest, $pullRequestUpdated);
     updateBranch($metadata, $pullRequestUpdated);
 
+
+    // Retrieve linked issue and copy Acceptance Criteria
+    $referencedIssue = getReferencedIssue($metadata, $pullRequest);
+    if (
+        isset($referencedIssue->data->repository) &&
+        count($referencedIssue->data->repository->pullRequest->closingIssuesReferences->nodes) > 0
+    ) {
+        $issueNumber = $referencedIssue->data->repository->pullRequest->closingIssuesReferences->nodes[0]->number;
+        $issueResponse = doRequestGitHub($metadata["token"], $metadata["issuesUrl"] . "/" . $issueNumber, null, "GET");
+        $issue = json_decode($issueResponse->getBody());
+
+        if (containsAcceptanceCriteria($issue->body)) {
+            preg_match('/##\s*Acceptance Criteria\s*\n(\s*- \[ \].+\n?)+/i', $issue->body, $matches);
+            $acceptanceCriteria = $matches[0] ?? '';
+
+            if ($acceptanceCriteria) {
+                $body = array('body' => $acceptanceCriteria);
+                doRequestGitHub($metadata['token'], $metadata['pullRequestUrl'], $body, 'PATCH');
+            }
+        }
     $labelsToAdd = [];
     if (strtolower($pullRequestUpdated->user->type) === "bot") {
         $labelsToAdd[] = "🤖 bot";

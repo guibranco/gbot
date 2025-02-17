@@ -8,6 +8,7 @@ class MarkdownGroupCheckboxValidator
     {
         $prBody = str_replace("\r", "", $prBody);
         $groupPattern = '/##\s(.+)\n(?:\<!--.*?--\>\n)?((?:- \[(.)\] .+\n)+)/i';
+        $acceptanceCriteriaPattern = '/##\s*Acceptance Criteria\s*\n(\s*- \[ \].+\n?)+/i';
         $checkboxPattern = "/- \[(x| )\] (.+)/i";
 
         $report = [
@@ -23,6 +24,10 @@ class MarkdownGroupCheckboxValidator
             PREG_SET_ORDER
         );
         $report["found"] = $found;
+        // Check for Acceptance Criteria specifically
+        if (preg_match($acceptanceCriteriaPattern, $prBody)) {
+            $report['found'] += 1;
+        }
 
         if (!$found) {
             return $report;
